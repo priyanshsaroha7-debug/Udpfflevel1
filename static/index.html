@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>84FF Command Center — Multi-Account Dashboard</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+
+  <!-- ====================================================================
+       ADMINISTRATOR LOGIN SCREEN
+       ==================================================================== -->
+  <div id="auth-screen" class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="brand-logo">84</div>
+        <div>
+          <h1>84FF Command Center</h1>
+          <p>Multi-Account Level-Up Engine &amp; Telemetry</p>
+        </div>
+      </div>
+
+      <form id="login-form" autocomplete="off">
+        <div class="form-group">
+          <label for="login-username">Administrator Username</label>
+          <input id="login-username" type="text" class="input-control" value="admin" required />
+        </div>
+        <div class="form-group">
+          <label for="login-password">Administrator Password</label>
+          <input id="login-password" type="password" class="input-control" placeholder="Enter admin password" value="admin123" required />
+        </div>
+        <button id="login-submit-btn" type="submit" class="btn btn-primary" style="width:100%; padding:11px; margin-top:4px;">
+          Sign In to Dashboard
+        </button>
+      </form>
+
+      <div class="auth-hint">
+        <strong>Security Notice:</strong> All account credentials are encrypted at rest with
+        <code>AES-128-CBC + HMAC (Fernet)</code>. Default local login:
+        <code>admin</code> / <code>admin123</code> (configurable via <code>.env</code>).
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MAIN APPLICATION SHELL
+       ==================================================================== -->
+  <div id="app-shell" class="app-shell hidden">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand">
+          <div class="brand-logo" style="width:36px;height:36px;font-size:14px;">84</div>
+          <div>
+            <div class="sidebar-brand-title">TEAM 84FF</div>
+            <div class="sidebar-brand-sub">BR Engine v2.0</div>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Main Navigation</div>
+
+        <button class="nav-item active" data-view="overview" onclick="switchView('overview')">
+          <span class="nav-item-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="9" rx="1"></rect>
+              <rect x="14" y="3" width="7" height="5" rx="1"></rect>
+              <rect x="14" y="12" width="7" height="9" rx="1"></rect>
+              <rect x="3" y="16" width="7" height="5" rx="1"></rect>
+            </svg>
+            Dashboard Overview
+          </span>
+        </button>
+
+        <button class="nav-item" data-view="accounts" onclick="switchView('accounts')">
+          <span class="nav-item-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            Account Management
+          </span>
+          <span id="nav-accounts-count" class="nav-badge">0</span>
+        </button>
+
+        <button class="nav-item" data-view="activity" onclick="switchView('activity')">
+          <span class="nav-item-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            Live Activity &amp; Logs
+          </span>
+        </button>
+
+        <button class="nav-item" data-view="system" onclick="switchView('system')">
+          <span class="nav-item-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            System &amp; Security
+          </span>
+        </button>
+
+        <div class="nav-section-label" style="margin-top:14px;">Quick Actions</div>
+        <button class="nav-item" onclick="openAddAccountModal()">
+          <span class="nav-item-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add New Account
+          </span>
+        </button>
+        <button class="nav-item" onclick="openBulkAddModal()">
+          <span class="nav-item-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="12" y1="18" x2="12" y2="12"></line>
+              <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+            Bulk Add (UID:PASS)
+          </span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="security-shield-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <div class="security-shield-text">
+            <strong>Fernet Vault Active</strong>
+            Zero-plaintext credential storage &amp; token redaction
+          </div>
+        </div>
+        <button class="btn btn-secondary" style="width:100%;" onclick="handleLogout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          Sign Out (<span id="admin-username-label">admin</span>)
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT WRAPPER -->
+    <div class="main-wrapper">
+
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Toggle Menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div class="page-title-group">
+            <h2 id="topbar-title">Dashboard Overview</h2>
+            <p id="topbar-subtitle">Real-time multi-account status, telemetry, and BR engine health</p>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="live-pill" title="Live WebSocket / Polling Sync">
+            <span id="ws-status-dot" class="pulse-dot"></span>
+            <span id="ws-status-text">Live Sync Active</span>
+          </div>
+
+          <button id="btn-run-diag" class="btn btn-secondary btn-sm" onclick="triggerSystemDiagnostics()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+            Verify DNS &amp; Version
+          </button>
+
+          <button class="btn btn-primary btn-sm" onclick="openAddAccountModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Account
+          </button>
+        </div>
+      </header>
+
+      <!-- MAIN CONTENT AREA -->
+      <main class="content-area">
+
+        <!-- ================================================================
+             VIEW 1: DASHBOARD OVERVIEW
+             ================================================================ -->
+        <section id="view-overview" class="view-section">
+
+          <!-- 6 STATISTIC KPI CARDS -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-label">Total Accounts</span>
+                <div class="kpi-icon indigo">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+              </div>
+              <div id="kpi-total-accounts" class="kpi-value">0</div>
+              <div class="kpi-sub">
+                <span>Registered in Vault</span>
+                <span id="kpi-regions-count" class="mono">0 Regions</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-label">Active Accounts</span>
+                <div class="kpi-icon emerald">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                </div>
+              </div>
+              <div id="kpi-active-accounts" class="kpi-value" style="color:var(--status-emerald);">0</div>
+              <div class="kpi-sub">
+                <span id="kpi-in-match-label">0 In Match</span>
+                <span id="kpi-searching-label" class="mono">0 Queue</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-label">Inactive Accounts</span>
+                <div class="kpi-icon slate">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                  </svg>
+                </div>
+              </div>
+              <div id="kpi-inactive-accounts" class="kpi-value">0</div>
+              <div class="kpi-sub">
+                <span>Idle / Stopped</span>
+                <span id="kpi-error-pill" class="mono" style="color:var(--status-rose);">0 Errors</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-label">Account Status</span>
+                <div class="kpi-icon cyan">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                </div>
+              </div>
+              <div id="kpi-health-ratio" class="kpi-value">100%</div>
+              <div class="kpi-sub">
+                <span>Operational Health</span>
+                <span id="kpi-total-errors-logged" class="mono">0 Alerts</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-label">Account Statistics</span>
+                <div class="kpi-icon purple">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                  </svg>
+                </div>
+              </div>
+              <div id="kpi-matches-completed" class="kpi-value">0</div>
+              <div class="kpi-sub">
+                <span id="kpi-avg-level">Avg Lvl 1.0</span>
+                <span id="kpi-total-exp" class="mono">0 EXP</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-label">System Status</span>
+                <div class="kpi-icon amber">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                    <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                    <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                  </svg>
+                </div>
+              </div>
+              <div id="kpi-sys-cpu" class="kpi-value">0%</div>
+              <div class="kpi-sub">
+                <span id="kpi-sys-mem">RAM 0 MB</span>
+                <span id="kpi-sys-uptime" class="mono">0m up</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CHARTS ROW: Account Status Distribution + Account Statistics Chart -->
+          <div class="overview-grid-2col">
+            <!-- Status Distribution Card -->
+            <div class="panel-card">
+              <div class="panel-header">
+                <div>
+                  <div class="panel-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                      <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                    </svg>
+                    Account Status Breakdown
+                  </div>
+                  <div class="panel-subtitle">Live distribution of worker states across all accounts</div>
+                </div>
+              </div>
+
+              <div class="status-chart-container">
+                <div class="doughnut-wrap">
+                  <svg id="status-doughnut-svg" width="185" height="185" viewBox="0 0 185 185"></svg>
+                  <div class="doughnut-center">
+                    <span id="doughnut-total-num" class="big-num">0</span>
+                    <span class="small-lbl">Accounts</span>
+                  </div>
+                </div>
+                <div id="status-legend-list" class="status-legend-list"></div>
+              </div>
+            </div>
+
+            <!-- Account Statistics & Regional Distribution Chart Card -->
+            <div class="panel-card">
+              <div class="panel-header">
+                <div>
+                  <div class="panel-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="18" y1="20" x2="18" y2="10"></line>
+                      <line x1="12" y1="20" x2="12" y2="4"></line>
+                      <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    Account Statistics &amp; Telemetry
+                  </div>
+                  <div class="panel-subtitle">Compare account levels, matches played, and regional distribution</div>
+                </div>
+                <div style="display:flex; gap:6px;">
+                  <button id="chart-tab-levels" class="btn btn-secondary btn-sm" onclick="setStatsChartMode('levels')">Levels &amp; EXP</button>
+                  <button id="chart-tab-regions" class="btn btn-secondary btn-sm" onclick="setStatsChartMode('regions')">By Region</button>
+                </div>
+              </div>
+
+              <div id="stats-bar-chart-area" class="bar-chart-area"></div>
+            </div>
+          </div>
+
+          <!-- BOTTOM ROW: System Status Telemetry + Recent Activity -->
+          <div class="overview-bottom-grid">
+            <!-- System & Protocol Status -->
+            <div class="panel-card">
+              <div class="panel-header">
+                <div>
+                  <div class="panel-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="2" y1="12" x2="22" y2="12"></line>
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                    </svg>
+                    System &amp; Protocol Engine Status
+                  </div>
+                  <div class="panel-subtitle">Cloudflare Smart DNS, Google Play Scraper &amp; Gateway Telemetry</div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="triggerSystemDiagnostics()">Refresh</button>
+              </div>
+
+              <div class="sys-metrics-grid">
+                <div class="sys-metric-item">
+                  <div class="sys-metric-label">PlayStore Free Fire Version</div>
+                  <div id="diag-play-ver" class="sys-metric-value">—</div>
+                </div>
+                <div class="sys-metric-item">
+                  <div class="sys-metric-label">Protocol Release Version</div>
+                  <div id="diag-rel-ver" class="sys-metric-value">OB55</div>
+                </div>
+                <div class="sys-metric-item">
+                  <div class="sys-metric-label">Cloudflare DNS (1.1.1.1)</div>
+                  <div id="diag-dns-ip" class="sys-metric-value">—</div>
+                </div>
+                <div class="sys-metric-item">
+                  <div class="sys-metric-label">DNS Resolution Latency</div>
+                  <div id="diag-dns-ms" class="sys-metric-value">—</div>
+                </div>
+                <div class="sys-metric-item">
+                  <div class="sys-metric-label">Active Async Workers</div>
+                  <div id="diag-workers" class="sys-metric-value">0 running</div>
+                </div>
+                <div class="sys-metric-item">
+                  <div class="sys-metric-label">Match Loop Config</div>
+                  <div id="diag-match-cfg" class="sys-metric-value">1s interval / 1500s max</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="panel-card">
+              <div class="panel-header">
+                <div>
+                  <div class="panel-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    Recent Activity Stream
+                  </div>
+                  <div class="panel-subtitle">Real-time events from account workers and administrator actions</div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="switchView('activity')">View All</button>
+              </div>
+
+              <div id="overview-activity-feed" class="activity-feed"></div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ================================================================
+             VIEW 2: MULTIPLE ACCOUNT MANAGEMENT
+             ================================================================ -->
+        <section id="view-accounts" class="view-section hidden">
+
+          <!-- Toolbar: Search, Filter, Sort, View Mode, Import/Export -->
+          <div class="accounts-toolbar">
+            <div class="toolbar-filters">
+              <div class="search-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input
+                  id="acc-search-input"
+                  type="text"
+                  class="input-control"
+                  placeholder="Search ID, UID, Display Name, Nickname..."
+                  oninput="renderAccountsView()"
+                />
+              </div>
+
+              <select id="acc-region-filter" class="select-control" onchange="renderAccountsView()">
+                <option value="ALL">All Regions</option>
+                <option value="ME">ME (Middle East)</option>
+                <option value="BD">BD (Bangladesh)</option>
+                <option value="IND">IND (India)</option>
+                <option value="SG">SG (Singapore)</option>
+                <option value="ID">ID (Indonesia)</option>
+                <option value="BR">BR (Brazil)</option>
+                <option value="VN">VN (Vietnam)</option>
+                <option value="TH">TH (Thailand)</option>
+                <option value="PK">PK (Pakistan)</option>
+                <option value="CIS">CIS</option>
+                <option value="NA">NA (North America)</option>
+                <option value="SAC">SAC (South America)</option>
+                <option value="EUROPE">EUROPE</option>
+                <option value="TW">TW (Taiwan)</option>
+                <option value="MY">MY (Malaysia)</option>
+                <option value="PH">PH (Philippines)</option>
+                <option value="HK">HK (Hong Kong)</option>
+              </select>
+
+              <select id="acc-status-filter" class="select-control" onchange="renderAccountsView()">
+                <option value="all">All Statuses</option>
+                <option value="active">Active (All Running)</option>
+                <option value="in_match">In Match (UDP)</option>
+                <option value="searching_match">Searching Match</option>
+                <option value="online">Online (TCP Gateway)</option>
+                <option value="authenticating">Authenticating</option>
+                <option value="inactive">Inactive / Stopped</option>
+                <option value="error">Error</option>
+              </select>
+
+              <select id="acc-sort-by" class="select-control" onchange="renderAccountsView()">
+                <option value="created_at">Sort: Date Added</option>
+                <option value="last_activity">Sort: Last Activity</option>
+                <option value="display_name">Sort: Display Name</option>
+                <option value="uid">Sort: Guest UID</option>
+                <option value="region">Sort: Region</option>
+                <option value="status">Sort: Status</option>
+                <option value="level">Sort: Level</option>
+                <option value="exp">Sort: EXP</option>
+                <option value="matches_completed">Sort: Matches</option>
+              </select>
+
+              <button id="acc-sort-dir-btn" class="btn btn-secondary btn-sm mono" onclick="toggleSortDir()">DESC ↓</button>
+            </div>
+
+            <div class="toolbar-actions">
+              <div style="display:inline-flex; background:#0c1322; border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:2px;">
+                <button id="layout-btn-table" class="btn btn-sm btn-primary" onclick="setAccountsLayout('table')">Table</button>
+                <button id="layout-btn-cards" class="btn btn-sm" style="background:transparent;color:var(--text-secondary);" onclick="setAccountsLayout('cards')">Cards</button>
+              </div>
+
+              <button class="btn btn-secondary btn-sm" onclick="openImportMetadataModal()">Import Metadata</button>
+              <button class="btn btn-secondary btn-sm" onclick="exportAccountsMetadata('json')">Export JSON</button>
+              <button class="btn btn-secondary btn-sm" onclick="exportAccountsMetadata('csv')">Export CSV</button>
+              <button class="btn btn-secondary btn-sm" onclick="openBulkAddModal()">+ Bulk Add</button>
+              <button class="btn btn-primary btn-sm" onclick="openAddAccountModal()">+ Add Account</button>
+            </div>
+          </div>
+
+          <!-- Bulk Action Bar (Shown when accounts are selected) -->
+          <div id="bulk-action-bar" class="bulk-bar hidden">
+            <div class="bulk-bar-left">
+              <span id="bulk-selected-count" class="mono">0 selected</span>
+              <button class="btn btn-secondary btn-sm" onclick="clearAllSelections()">Clear Selection</button>
+            </div>
+            <div class="bulk-bar-actions">
+              <button class="btn btn-emerald btn-sm" onclick="executeBulkAction('start')">Start Selected</button>
+              <button class="btn btn-amber btn-sm" onclick="executeBulkAction('stop')">Stop Selected</button>
+              <button class="btn btn-secondary btn-sm" onclick="executeBulkAction('restart')">Restart Selected</button>
+              <select id="bulk-region-select" class="select-control" style="padding:5px 8px; font-size:12px;" onchange="handleBulkRegionChange(this)">
+                <option value="">Change Region...</option>
+                <option value="ME">ME</option>
+                <option value="BD">BD</option>
+                <option value="IND">IND</option>
+                <option value="SG">SG</option>
+                <option value="ID">ID</option>
+                <option value="BR">BR</option>
+                <option value="VN">VN</option>
+                <option value="TH">TH</option>
+                <option value="PK">PK</option>
+                <option value="CIS">CIS</option>
+                <option value="NA">NA</option>
+                <option value="SAC">SAC</option>
+                <option value="EUROPE">EUROPE</option>
+                <option value="TW">TW</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" onclick="executeBulkAction('clear_errors')">Clear Errors</button>
+              <button class="btn btn-rose btn-sm" onclick="executeBulkAction('delete')">Delete Selected</button>
+            </div>
+          </div>
+
+          <!-- Table Layout Container -->
+          <div id="accounts-table-view" class="table-wrapper">
+            <table class="accounts-table">
+              <thead>
+                <tr>
+                  <th style="width:36px;">
+                    <input id="select-all-checkbox" type="checkbox" onchange="toggleSelectAllFiltered(this.checked)" />
+                  </th>
+                  <th>Account ID / UID</th>
+                  <th>Display Name &amp; Nickname</th>
+                  <th>Region</th>
+                  <th>Current Status</th>
+                  <th>Level &amp; EXP</th>
+                  <th>Matches</th>
+                  <th>Last Activity</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="accounts-table-body"></tbody>
+            </table>
+          </div>
+
+          <!-- Cards Layout Container -->
+          <div id="accounts-cards-view" class="accounts-cards-grid hidden"></div>
+
+        </section>
+
+        <!-- ================================================================
+             VIEW 3: LIVE ACTIVITY & AUDIT LOGS
+             ================================================================ -->
+        <section id="view-activity" class="view-section hidden">
+          <div class="panel-card">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Live Activity &amp; Security Audit Stream</div>
+                <div class="panel-subtitle">All credentials and tokens are automatically redacted before logging</div>
+              </div>
+              <div style="display:flex; gap:10px; align-items:center;">
+                <select id="activity-level-filter" class="select-control" onchange="renderFullActivityLog()">
+                  <option value="all">All Levels</option>
+                  <option value="info">Info</option>
+                  <option value="success">Success</option>
+                  <option value="warning">Warning</option>
+                  <option value="error">Error</option>
+                </select>
+              </div>
+            </div>
+            <div id="full-activity-feed" class="activity-feed" style="max-height:620px;"></div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             VIEW 4: SYSTEM & SECURITY SETTINGS
+             ================================================================ -->
+        <section id="view-system" class="view-section hidden">
+          <div class="overview-grid-2col">
+            <div class="panel-card">
+              <div class="panel-header">
+                <div>
+                  <div class="panel-title">Administrator Security &amp; Session Password</div>
+                  <div class="panel-subtitle">Update your administrator password (hashed with Argon2id)</div>
+                </div>
+              </div>
+              <form id="change-pw-form" onsubmit="handleChangeAdminPassword(event)">
+                <div class="form-group">
+                  <label>Current Administrator Password</label>
+                  <input id="cp-current" type="password" class="input-control" required />
+                </div>
+                <div class="form-group">
+                  <label>New Administrator Password (min 6 characters)</label>
+                  <input id="cp-new" type="password" class="input-control" minlength="6" required />
+                </div>
+                <button type="submit" class="btn btn-primary">Update Admin Password</button>
+              </form>
+            </div>
+
+            <div class="panel-card">
+              <div class="panel-header">
+                <div>
+                  <div class="panel-title">Supported Region Matrix (lv.py)</div>
+                  <div class="panel-subtitle">Protocol prefixes and language codes configured in lv.py</div>
+                </div>
+              </div>
+              <div class="table-wrapper" style="max-height:320px; overflow-y:auto;">
+                <table class="accounts-table">
+                  <thead>
+                    <tr>
+                      <th>Region</th>
+                      <th>Packet Prefix</th>
+                      <th>Language</th>
+                      <th>Keep-Alive Hex</th>
+                    </tr>
+                  </thead>
+                  <tbody id="regions-matrix-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL: ADD / EDIT SINGLE ACCOUNT
+       ==================================================================== -->
+  <div id="modal-account" class="backdrop-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-account-title">Add New Account</h3>
+        <button class="btn btn-icon btn-secondary" onclick="closeAccountModal()">✕</button>
+      </div>
+      <form id="account-form" onsubmit="submitAccountForm(event)">
+        <div class="modal-body">
+          <input type="hidden" id="form-account-id" value="" />
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="form-uid">Guest / Login UID *</label>
+              <input id="form-uid" type="text" class="input-control mono" placeholder="e.g. 4029184712" required />
+            </div>
+            <div class="form-group">
+              <label for="form-display-name">Display Name</label>
+              <input id="form-display-name" type="text" class="input-control" placeholder="e.g. SquadBot_01" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label id="form-password-label" for="form-password">Account Password / Secret * (Encrypted via Fernet)</label>
+            <input id="form-password" type="password" class="input-control mono" placeholder="Encrypted at rest — never shown in plaintext" />
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="form-region">Target Region *</label>
+              <select id="form-region" class="select-control">
+                <option value="ME">ME (Middle East - 031900)</option>
+                <option value="BD">BD (Bangladesh - 031400)</option>
+                <option value="IND">IND (India - 031400)</option>
+                <option value="SG">SG (Singapore - 031500)</option>
+                <option value="ID">ID (Indonesia - 031500)</option>
+                <option value="BR">BR (Brazil - 031500)</option>
+                <option value="VN">VN (Vietnam - 031500)</option>
+                <option value="TH">TH (Thailand - 031500)</option>
+                <option value="PK">PK (Pakistan - 031500)</option>
+                <option value="CIS">CIS (031500)</option>
+                <option value="NA">NA (North America - 031500)</option>
+                <option value="SAC">SAC (South America - 031500)</option>
+                <option value="EUROPE">EUROPE (031500)</option>
+                <option value="TW">TW (Taiwan - 031500)</option>
+                <option value="MY">MY (Malaysia - 031500)</option>
+                <option value="PH">PH (Philippines - 031500)</option>
+                <option value="HK">HK (Hong Kong - 031500)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="form-mode-id">BR Mode ID / Map ID</label>
+              <div style="display:flex; gap:8px;">
+                <input id="form-mode-id" type="number" class="input-control mono" min="1" max="20" value="1" title="Mode ID" />
+                <input id="form-map-id" type="number" class="input-control mono" min="1" max="20" value="1" title="Map ID" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="form-notes">Account Notes (Optional Metadata)</label>
+            <input id="form-notes" type="text" class="input-control" placeholder="e.g. Main BR grinder account" />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeAccountModal()">Cancel</button>
+          <button id="form-account-submit" type="submit" class="btn btn-primary">Save Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL: BULK ADD ACCOUNTS
+       ==================================================================== -->
+  <div id="modal-bulk-add" class="backdrop-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Bulk Add Multiple Accounts</h3>
+        <button class="btn btn-icon btn-secondary" onclick="closeBulkAddModal()">✕</button>
+      </div>
+      <form onsubmit="submitBulkAddForm(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="bulk-default-region">Default Region (if not specified per line)</label>
+            <select id="bulk-default-region" class="select-control">
+              <option value="ME">ME</option>
+              <option value="BD">BD</option>
+              <option value="IND">IND</option>
+              <option value="SG">SG</option>
+              <option value="ID">ID</option>
+              <option value="BR">BR</option>
+              <option value="VN">VN</option>
+              <option value="TH">TH</option>
+              <option value="PK">PK</option>
+              <option value="EUROPE">EUROPE</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="bulk-raw-lines">Enter one account per line: <code>UID:PASSWORD</code> or <code>UID,PASSWORD,REGION,DISPLAY_NAME</code></label>
+            <textarea
+              id="bulk-raw-lines"
+              rows="8"
+              class="textarea-control mono"
+              placeholder="4100293841:secretpass123&#10;4100293842,secretpass456,BD,DhakaRunner_01&#10;4100293843,secretpass789,ME,SquadBot_ME"
+              required
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeBulkAddModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Encrypt &amp; Import All</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL: IMPORT METADATA JSON
+       ==================================================================== -->
+  <div id="modal-import-meta" class="backdrop-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Import Account Metadata (JSON)</h3>
+        <button class="btn btn-icon btn-secondary" onclick="closeImportMetadataModal()">✕</button>
+      </div>
+      <form onsubmit="submitImportMetadata(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Upload Metadata JSON File</label>
+            <input type="file" accept=".json" class="input-control" onchange="loadMetadataFileIntoTextarea(this)" />
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Or Paste Metadata JSON Payload</label>
+            <textarea
+              id="import-meta-json"
+              rows="8"
+              class="textarea-control mono"
+              placeholder='{"accounts": [{"uid": "490192831", "display_name": "Alpha_01", "region": "ME", "notes": "Imported"}]}'
+              required
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeImportMetadataModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Import Metadata</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       DEDICATED ACCOUNT DETAILS SLIDE-OVER DRAWER
+       ==================================================================== -->
+  <div id="details-drawer-overlay" class="drawer-overlay hidden" onclick="handleDrawerBackdropClick(event)">
+    <aside class="details-drawer" onclick="event.stopPropagation()">
+      <div class="drawer-header">
+        <div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <h3 id="det-display-name" style="font-size:17px;">Account Details</h3>
+            <span id="det-status-badge" class="status-badge status-inactive"><span class="dot"></span>Inactive</span>
+          </div>
+          <div id="det-id-subtitle" class="mono" style="font-size:12px; color:var(--text-secondary); margin-top:3px;">
+            ID: — | UID: —
+          </div>
+        </div>
+        <button class="btn btn-icon btn-secondary" onclick="closeAccountDetails()">✕</button>
+      </div>
+
+      <div class="drawer-body">
+        <!-- Quick Worker Actions -->
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; padding:12px 14px; background:rgba(255,255,255,0.025); border:1px solid var(--border-subtle); border-radius:var(--radius-sm);">
+          <div style="font-size:12.5px; color:var(--text-secondary);">
+            <strong>Status Message:</strong> <span id="det-status-msg">—</span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button id="det-btn-start" class="btn btn-emerald btn-sm" onclick="drawerAction('start')">Start Worker</button>
+            <button id="det-btn-stop" class="btn btn-amber btn-sm" onclick="drawerAction('stop')">Stop Worker</button>
+            <button class="btn btn-secondary btn-sm" onclick="drawerAction('restart')">Restart</button>
+            <button class="btn btn-secondary btn-sm" onclick="drawerAction('edit')">Edit</button>
+          </div>
+        </div>
+
+        <!-- Core Identity & Statistics Grid -->
+        <div>
+          <div class="nav-section-label" style="padding:0 0 8px;">Identity, Region &amp; Session Telemetry</div>
+          <div class="detail-stats-grid">
+            <div class="detail-stat-card">
+              <div class="lbl">Unique System ID</div>
+              <div id="det-sys-id" class="val">—</div>
+            </div>
+            <div class="detail-stat-card">
+              <div class="lbl">Guest Login UID</div>
+              <div id="det-uid" class="val">—</div>
+            </div>
+            <div class="detail-stat-card">
+              <div class="lbl">Garena Account ID</div>
+              <div id="det-game-id" class="val">—</div>
+            </div>
+            <div class="detail-stat-card">
+              <div class="lbl">In-Game Nickname</div>
+              <div id="det-nickname" class="val">—</div>
+            </div>
+            <div class="detail-stat-card">
+              <div class="lbl">Region &amp; Prefix</div>
+              <div id="det-region" class="val">—</div>
+            </div>
+            <div class="detail-stat-card">
+              <div class="lbl">Level / EXP</div>
+              <div id="det-level-exp" class="val">—</div>
+            </div>
+            <div class="detail-stat-card">
+              <div class="lbl">Session EXP Gained</div>
+              <div id="det-exp-gained" class="val" style="color:var(--status-emerald);">+0</div>
+            </div>
+            <div class="detail-stat-card">
+              <div class="lbl">Matches (Done / Queued)</div>
+              <div id="det-matches" class="val">0 / 0</div>
+            </div>
+            <div class="detail-stat-card">
+              <div class="lbl">Last Activity</div>
+              <div id="det-last-activity" class="val" style="font-size:12px;">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Persistent Device Profile (devices.json) -->
+        <div>
+          <div class="nav-section-label" style="padding:0 0 8px;">Persistent Virtual Device Profile (devices.json)</div>
+          <div id="det-device-box" class="detail-stats-grid"></div>
+        </div>
+
+        <!-- Error History Section -->
+        <div>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+            <div class="nav-section-label" style="padding:0;">Account Error History (<span id="det-error-count">0</span>)</div>
+            <button class="btn btn-secondary btn-sm" onclick="clearDrawerAccountErrors()">Clear Error History</button>
+          </div>
+          <div id="det-error-list" class="error-history-list"></div>
+        </div>
+
+        <!-- Account-Specific Activity Logs -->
+        <div>
+          <div class="nav-section-label" style="padding:0 0 8px;">Account Event History</div>
+          <div id="det-logs-list" class="activity-feed" style="max-height:220px;"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
